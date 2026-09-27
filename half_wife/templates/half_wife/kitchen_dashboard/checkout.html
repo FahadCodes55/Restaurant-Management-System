@@ -1,0 +1,129 @@
+<!DOCTYPE html>
+
+{% load static %}
+
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>HALF WIFE — In-House Pay-First POS Engine</title>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" type="text/css" href="{% static 'half_wife/css/styles.css' %}">
+</head>
+<body>
+    <!-- CHECKOUT MAIN SECTION -->
+    <main class="checkout-main">
+        <!-- Customer & Table Input Form -->
+        <div class="checkout-card">
+            <h2>Dine-In Payment</h2>
+            <form id="checkoutForm" method="POST" action="{% url 'checkout' %}" onsubmit="generateReceipt(event)">
+                {% csrf_token %}
+                <div class="form-group">
+                    <label class="form-label">Customer Name (Optional)</label>
+                    <input type="text" class="form-input" name="customer_name" id="custName" placeholder="e.g. Alex Morgan">
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Phone Number (Optional)</label>
+                    <input type="tel" class="form-input" name="customer_phone" id="custPhone" placeholder="+92 300 0000000">
+                </div>
+                <div class="form-group" id="tableSelectionGroup">
+                    <label class="form-label">Select Dining Table</label>
+                    <select class="form-select" name="dining_table" id="custTableSelect">
+                        <option value="" disabled selected>Select dining table...</option>
+                        {% for table in tables %}
+                        <option value="{{ table.table_name }}" {% if table.table_name == selected_table %}selected{% endif %}>
+                            {{ table.table_name }} ({{ table.zone_area }}) — 👥 {{ table.seating_capacity }} Pax
+                        </option>
+                        {% empty %}
+                            <option value="" disabled>No tables registered.</option>
+                        {% endfor %}
+                    </select>
+                </div>
+
+                <div class="form-group" id="addressInputGroup" style="display: none;">
+                    <label class="form-label">Delivery Address</label>
+                    <input type="text" class="form-input" name="delivery_address" id="custAddressInput" placeholder="e.g. House 12, Sector B, City Center">
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label">Fulfillment Type</label>
+                    <select class="form-select" name="fulfillment_type" id="fulfillmentType" onchange="toggleFulfillmentFields()">
+                        <option value="Dine-In">Dine-In Smart Table</option>
+                        <option value="Delivery">Fast Fleet Home Delivery</option>
+                        <option value="VIP Pickup">VIP Priority Pickup</option>
+                    </select>
+                </div>
+
+                <input type="hidden" name="total_price" id="hiddenTotalPrice" value="57.00">
+
+                <label class="form-label" style="margin-top: 16px;">Select In-House Payment Method</label>
+                <div class="payment-options">
+                    <div class="payment-option active" id="payCounter" onclick="setPayment('Counter Cash')">Counter Cash Payment</div>
+                    <div class="payment-option" id="payCard" onclick="setPayment('POS Card Terminal')">Credit Card</div>
+                </div>
+                <input type="hidden" name="payment_type" id="selectedPaymentType" value="Counter Cash">
+
+                <button type="submit" class="btn-submit">Confirm Payment & Send to Kitchen</button>
+            </form>
+        </div>
+        <!-- Order Summary Card -->
+        <div class="checkout-card" style="height: fit-content;">
+            <h2>Order Summary</h2>
+            {% for item in active_order %}
+            <div class="order-summary-item">
+                <span>{{ item.name }} (x{{ item.qty }})</span>
+                <span>PKR {% widthratio item.price 1 item.qty %}</span>
+            </div>
+            {% empty %}
+            <div style="color: var(--text-muted; font-size: 13px;">No items in order.</div>
+            {% endfor %}
+
+            <div class="order-summary-item total">
+                <span>Total Amount Due</span>
+                <span>PKR {{ total_price }}</span>
+            </div>
+        </div>
+
+        <!-- Hidden input passing total price to database -->
+        <input type="hidden" name="total_price" value="{{ total_price }}">
+    </main>
+
+    <!-- AUTOMATED RECEIPT MODAL -->
+    <div class="modal-overlay" id="receiptModal">
+        <div class="receipt-card">
+            <div class="receipt-header">
+                <h3>HALF WIFE RECEIPT</h3>
+                <p style="font-size: 11px; color: var(--text-muted); margin-top: 4px;">IN-HOUSE DINE-IN PAYMENT TICKET</p>
+            </div>
+            <div class="receipt-details" id="receiptInfo">
+                <!-- Dynamic receipt data inserted via JS -->
+            </div>
+            <table class="receipt-table">
+                <thead>
+                    <tr>
+                        <th>Item</th>
+                        <th>Qty</th>
+                        <th>Price</th>
+                    </tr>
+                </thead>
+                <tbody id="receiptTableBody">
+                    <!-- Dynamically populated via JS -->
+                </tbody>
+            </table>
+            <div style="display: flex; justify-content: space-between; font-weight: 700; font-size: 15px; margin-bottom: 24px;">
+                <span>Total Paid:</span>
+                <span id="receiptTotalPaid" style="color: var(--primary-green);">PKR 0.00</span>
+            </div>
+            <button class="btn-submit" onclick="closeReceipt()" style="margin-top: 0;">Done & Return Home</button>
+        </div>
+    </div>
+
+    {{ active_order|json_script:"server-order-data" }}
+
+    <script>
+        const serverOrderItems = JSON.parse(document.getElementById('server-order-data').textContent);
+    </script>
+
+    <script src="{% static 'half_wife/js/kitchen-dashboard/checkout.js' %}"></script>
+</body>
+</html>

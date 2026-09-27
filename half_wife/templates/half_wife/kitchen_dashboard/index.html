@@ -1,0 +1,154 @@
+<!DOCTYPE html>
+
+{% load static %}
+
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Half Wife Restro - Menu</title>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" type="text/css" href="{% static 'half_wife/css/styles.css' %}">
+</head>
+<body style="background: #FAF7F2; margin: 0; padding: 0;">
+
+    <!-- TOP OPERATIONAL HEADER -->
+    <header style="background: #FFFFFF; border-bottom: 1px solid #E5DFD7; position: fixed; top: 0; left: 0; width: 100%; z-index: 100;">
+        <div class="nav-container" style="padding: 10px 16px; display: flex; justify-content: space-between; align-items: center;">
+            <a href="#" class="logo" style="color: #0D3324; text-decoration: none; font-weight: 800; font-size: 16px;">
+                HALF WIFE <span style="background: #0D3324; color: #FFFFFF; padding: 2px 6px; border-radius: 4px; font-size: 10px;">Resto</span>
+            </a>
+            
+            <div style="display: flex; align-items: center; gap: 8px;">
+                <span class="pos-server-tag" style="font-size: 11px; color: #64748B; font-weight: 600;">
+                    {% if user.is_authenticated and employee.emp_role == 'Waiter' %}
+                        {{ employee.full_name }}
+                    {% else %} Login
+                    {% endif %}
+                </span>
+                <button onclick="window.location.href='{% url 'home' %}'" class="btn-secondary" style="padding: 5px 10px; font-size: 11px;">Exit</button>
+            </div>
+        </div>
+    </header>
+
+    <!-- MAIN TWO-COLUMN POS INTERFACE -->
+    <main class="pos-app-wrapper">
+        
+        <!-- LEFT COLUMN: CONTROL & CATALOG -->
+        <section style="display: flex; flex-direction: column; min-width: 0;">
+            
+            <!-- Table & Search Toolbar -->
+            <div class="pos-top-control">
+                <div class="table-selector-group">
+                    <label style="font-size: 12px; font-weight: 700; color: #0D3324;">ACTIVE TABLE:</label>
+                    <select class="pos-select" id="posTableSelect" onchange="updateTicketHeader()">
+                        <!-- Dynamically populated -->
+                        <option value="" disabled selected>Select dining table...</option>
+                        {% for table in tables %}
+                            <option value="{{ table.table_name }}" data-capacity="{{ table.seating_capacity }}">
+                                {{ table.table_name }} ({{ table.zone_area }}) — 👥 {{ table.seating_capacity }} Pax
+                            </option>
+                        {% empty %}
+                            <option value="" disabled>No tables found. Register some in Floor & Tables.</option>
+                        {% endfor %}
+                    </select>
+
+
+                </div>
+
+                <input 
+                    type="text" 
+                    class="pos-search-input" 
+                    id="posSearchInput" 
+                    onkeyup="filterPosDishes()" 
+                    placeholder="Quick search dishes, burgers, wings, drinks..."
+                >
+            </div>
+
+            <!-- Horizontal Category Filter Tabs -->
+            <div class="filters-section" id="dynamicFiltersContainer" style="padding: 0 0 16px 0;">
+                <button class="filter-pill active" onclick="setPosFilter(this, 'all')">All Menu</button>
+            </div>
+
+            <!-- Category-Arranged Carousel Container -->
+            <div class="pos-catalog-wrapper" id="posCatalogContainer">
+                <!-- Injected dynamically by JavaScript -->
+            </div>
+        </section>
+
+        <!-- RIGHT COLUMN: LIVE TABLE BILL & ORDER TICKET -->
+        <aside class="pos-ticket-sidebar" id="posTicketSidebar">
+            <!-- 1. Fixed Header with Mobile Close (X) -->
+            <div class="pos-ticket-header">
+                <div>
+                    <span class="pos-ticket-title" id="ticketTableLabel">Table 01</span>
+                    <div style="font-size: 11px; color: #64748B;" id="ticketTimeLabel">Active Bill • Waiter Marcus</div>
+                </div>
+                <div style="display: flex; align-items: center; gap: 8px;">
+                    <span style="font-size: 11px; font-weight: 700; color: #10B981; background: #E6F4EA; padding: 2px 8px; border-radius: 6px;">OPEN</span>
+                    <!-- Mobile Close Button (FIXED) -->
+                    <button class="mobile-drawer-close-btn" type="button" onclick="toggleMobileTicket(false)" aria-label="Close Ticket">&times;</button>
+                </div>
+            </div>
+
+            <!-- 2. Scrollable Itemized Bill List -->
+            <div class="pos-ticket-items" id="posTicketList">
+                <div style="text-align: center; color: #94A3B8; padding: 40px 0; font-size: 13px;">
+                    No dishes selected.<br>Tap any dish on the menu to add.
+                </div>
+            </div>
+
+            <!-- 3. Fixed Footer with Summary & Buttons -->
+            <div class="pos-ticket-footer">
+                <div class="pos-summary-line">
+                    <span>Subtotal:</span>
+                    <strong id="posSubtotal">PK0.00</strong>
+                </div>
+                <div class="pos-summary-line">
+                    <span>Tax (5% GST):</span>
+                    <span id="posTax">PK0.00</span>
+                </div>
+                <div class="pos-summary-line total">
+                    <span>Payable Total:</span>
+                    <span id="posTotal" style="color: #0D3324;">PK0.00</span>
+                </div>
+
+                <div class="pos-ticket-actions" style="display: flex; flex-direction: column; gap: 8px;">
+                    <button type="button" class="btn-pos-addon" onclick="sendAddOnToKitchen()" style="background: #D97706; color: #FFFFFF; border: none; padding: 10px; border-radius: 6px; font-weight: 700; cursor: pointer; font-size: 13px;">
+                        + Send Add-On to Kitchen
+                    </button>
+
+                    <div style="display: flex; gap: 8px;">
+                        <button type="button" class="btn-pos-clear" onclick="clearTicket()" style="flex: 1;">Clear</button>
+                        <button type="button" class="btn-pos-dispatch" onclick="sendTicketToKitchen()" style="flex: 2;">Checkout Now ➔</button>
+                    </div>
+                </div>
+            </div>
+
+        </aside>
+
+    </main>
+
+    <!-- BACKDROP OVERLAY FOR PHONE VIEW (CRITICAL FIX FOR TOGGLE) -->
+    <div class="pos-mobile-backdrop" id="posMobileBackdrop" onclick="toggleMobileTicket(false)"></div>
+
+    <!-- MOBILE PERSISTENT QUICK-BILL DOCK -->
+    <div class="pos-mobile-bill-bar">
+        <div class="mob-dock-left">
+            <span class="mob-dock-label">Ticket (<span id="mobileItemCount">0</span>)</span>
+            <strong class="mob-dock-total" id="mobileBarTotal">PK0.00</strong>
+        </div>
+        <div class="mob-dock-actions">
+            <button type="button" class="btn-pos-mob-view" onclick="toggleMobileTicket(true)">View Ticket</button>
+        </div>
+    </div>
+
+    <!-- EMBED DATABASE JSON DATA -->
+    <script id="menu-data" type="application/json">
+        {{ menu_json|safe }}
+    </script>
+
+    <!-- SCRIPT ENGINE -->
+    <script src="{% static 'half_wife/js/kitchen-dashboard/index.js' %}"></script>
+</body>
+</html>

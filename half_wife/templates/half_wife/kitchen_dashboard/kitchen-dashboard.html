@@ -1,0 +1,94 @@
+<!DOCTYPE html>
+
+{% load static %}
+
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Half Wife Restro - Live Kitchen</title>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" type="text/css" href="{% static 'half_wife/css/styles.css' %}">
+</head>
+<body>
+
+    <!-- TOP HEADER -->
+    <header>
+        <div class="nav-container">
+            <a href="#" class="logo">HALF WIFE <span style="background: #0D3324; color: #FFFFFF; padding: 2px 6px; border-radius: 4px; font-size: 9px;">KDS</span></a>
+            <div class="nav-actions">
+                <span style="font-size: 12px; color: #94a3b8; font-weight: 600;">
+                    {% if current_employee %}
+                        {{ current_employee.full_name }}
+                    {% elif user.is_authenticated %}
+                        {{ user.username }}
+                    {% else %}
+                        <a href="{% url 'accounts' %}" style="color: inherit; text-decoration: none;">Login</a>
+                    {% endif %}
+                </span>
+                <button class="btn-secondary" onclick="logoutKitchen()" style="padding: 6px 12px; font-size: 11px; color: #000;">Sign Out</button>
+            </div>
+        </div>
+    </header>
+
+    <div class="kitchen-layout">
+        
+        <!-- OPERATIONAL TICKER -->
+        <div class="kitchen-header">
+            <div>
+                <h1 style="font-size: 22px; font-weight: 700; color: #000;">Live Order Queue & Floor Dispatch</h1>
+                <p style="font-size: 13px; color: #94a3b8; margin-top: 2px;">Real-time preparation countdown, kitchen line tickets, and table state.</p>
+            </div>
+
+            <div class="kitchen-stats-row">
+                <div class="kds-stat-pill">Pending Orders: <strong id="kdsPendingCount">0</strong></div>
+                <div class="kds-stat-pill">In-Preparation: <strong id="kdsPrepCount">0</strong></div>
+                <div class="kds-stat-pill">Avg Prep Velocity: <strong>14m</strong></div>
+            </div>
+        </div>
+
+        <!-- MAIN KITCHEN WORKSPACE -->
+        <div class="kitchen-workspace">
+            
+            <!-- LEFT: ACTIVE TICKETS QUEUE -->
+            <section>
+
+                <div class="tickets-grid" id="ticketsContainer">
+                    <!-- Populated dynamically by JS -->
+                </div>
+            </section>
+
+            <!-- RIGHT: ACTIVE FLOOR MONITOR -->
+            <aside class="floor-side-panel">
+                <div class="panel-title-row">
+                    <h2 style="font-size: 16px; font-weight: 700; color: #000;">Floor Dining Status</h2>
+                    <span style="font-size: 12px; color: #10b981; font-weight: 600;" id="kdsActiveDineCount">0 Tables Active</span>
+                </div>
+                
+                <p style="font-size: 12px; color: #94a3b8;">Visual table tracking showing tables currently seated and dining.</p>
+
+                <div class="kds-floor-grid" id="kdsFloorGrid">
+                    <!-- Populated dynamically by JS -->
+                </div>
+            </aside>
+
+        </div>
+    </div>
+
+    <script>
+        const realDatabaseOrders = JSON.parse('{{ orders_json|safe }}');
+        const realDatabaseTables = JSON.parse('{{ tables_json|safe }}');
+    </script>
+
+
+    <script>
+    setTimeout(function() {
+        window.location.reload();
+    }, 10000);
+    </script>
+
+
+    <!-- JAVASCRIPT LOGIC -->
+    <script src="{% static 'half_wife/js/kitchen-dashboard/main.js' %}"></script>
+</body>
+</html>
