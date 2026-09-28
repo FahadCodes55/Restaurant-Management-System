@@ -11,12 +11,8 @@ from django.utils import timezone
 
 # Create your views here.
 
-
-
 def home(request):
     return render(request, 'half_wife/accounts/portal-login.html')
-
-
 
 def accounts(request):
     if request.method == 'POST':
